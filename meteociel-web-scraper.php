@@ -3,30 +3,32 @@
 require __DIR__ . '/vendor/autoload.php';
 
 use Goutte\Client;
+use Commando\Command;
+use Fxmauricard\StringUtils;
 
-/**
- * Class that contains useful methods for manipulating string.
- */
-class StringUtils
-{
-	/**
-	 * Method that returns a substring from the start of the haystack to the needle.
-	 *
-	 * @param   string  $haystack   The string in which we're searching in.
-	 * @param   string  $needle     The string we are searching.
-	 * @return  string              The string.
-	 */
-	public static function cutBefore($haystack, $needle)
-	{
-		$split = explode($needle, $haystack, 2);
-		return array_shift($split);
-	}
-}
+$command = new Command();
+$command->setHelp('PHP Meteociel Web Scraper');
+$command->option('s')
+	->aka('start_month')
+	->describeAs('First month data to get.')
+	->default(1);
+$command->option('e')
+	->aka('end_month')
+	->describeAs('Last month data to get.')
+	->default(12);
+$command->option('y')
+	->aka('year')
+	->describeAs('Year of which we want data.')
+	->require();
+$command->option('l')
+	->aka('location_id')
+	->describeAs('Id of the location we want meteo data.')
+	->require();
 
-$id = 7524;
-$annee = 2014;
+$id = $command['location_id']; // 7524
+$annee = $command['year'];
 
-for ($mois = 1 ; $mois <= 12 ; ++$mois) {
+for ($mois = $command['start_month'] ; $command['end_month'] <= 12 ; ++$mois) {
 	$output = fopen("$id-$annee-$mois.csv", 'w');
 	fputs($output, '"id","mois","jour","Heure","Visi","Temp","hum","humx","Vent","Pression","Precip"' . PHP_EOL);
 
@@ -34,9 +36,11 @@ for ($mois = 1 ; $mois <= 12 ; ++$mois) {
 
 	$last_day = cal_days_in_month(CAL_GREGORIAN, $mois, $annee);
 	for ($jour = 1; $jour <= $last_day; ++$jour) {
-		$crawler = $client->request('GET', "http://www.meteociel.fr/temps-reel/obs_villes.php?code2=$id&jour2=$jour&mois2=$mois&annee2=$annee&envoyer=OK");
-		$data = array();
-		$crawler->filter('body > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > center > table')->eq(3)->filter('tr')->each(function ($node, $i) {
+		echo "$id-$jour-$annee-$mois" . PHP_EOL;
+        $url = "http://www.meteociel.fr/temps-reel/obs_villes.php?code2=$id&jour2=$jour&mois2=$mois&annee2=$annee&envoyer=OK";
+        $crawler = $client->request('GET', $url);
+        $filter = 'body > table > tbody > tr > td > table > tbody > tr > td > table > tbody > tr > td > center > table';
+        $crawler->filter($filter)->eq(3)->filter('tr')->each(function ($node, $i) {
 			global $output;
 			global $id;
 			global $annee;

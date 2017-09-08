@@ -1,5 +1,7 @@
 {
     "require": {
-        "fabpot/goutte": "^3.2"
+        "fabpot/goutte": "^3.2",
+        "nategood/commando": "^0.2.9",
+        "fxmauricard/string-utils": "^0.1.0"
     }
 }
